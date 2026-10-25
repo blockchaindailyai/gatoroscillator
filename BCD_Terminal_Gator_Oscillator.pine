@@ -1,0 +1,64 @@
+//@version=6
+indicator("BCD Terminal - Gator Oscillator", shorttitle="BCD Gator", overlay=false, format=format.price, precision=8)
+
+// Port of BCDTerminal's Gator study, main commit 75042ebea619f2daee2c640b1e3d12ef09aadad2.
+// This is the two-sided oscillator, NOT the three-line Williams Alligator overlay.
+// Terminal parity: HL2; SMA-seeded SMMA/RMA; unshifted spreads; raw price units.
+// No ATR/percent normalization and no +8/+5/+3 Alligator plot displacements.
+
+int jawLength = input.int(13, "Jaw Length", minval=1, maxval=10000, group="Terminal settings")
+int teethLength = input.int(8, "Teeth Length", minval=1, maxval=10000, group="Terminal settings")
+int lipsLength = input.int(5, "Lips Length", minval=1, maxval=10000, group="Terminal settings")
+color growingColor = input.color(#31c987, "Growing or unchanged", group="Appearance")
+color shrinkingColor = input.color(#ef4549, "Shrinking / no previous value", group="Appearance")
+
+// Explicit recurrence preserves the terminal's seed and missing-source reset.
+// Each written call has its own state. Calls must run on every bar.
+// Ordinary var (not varip) allows TradingView's realtime rollback to work.
+smma(float source, simple int length) =>
+    var float current = na
+    var float seedSum = 0.0
+    var int seedCount = 0
+    if na(source)
+        current := na
+        seedSum := 0.0
+        seedCount := 0
+    else if na(current)
+        seedSum += source
+        seedCount += 1
+        if seedCount == length
+            current := seedSum / length
+    else
+        current := (current * (length - 1) + source) / length
+    current
+
+float jaw = smma(hl2, jawLength)
+float teeth = smma(hl2, teethLength)
+float lips = smma(hl2, lipsLength)
+float upper = math.abs(jaw - teeth)
+float lower = -math.abs(teeth - lips)
+
+// Compare magnitude on BOTH sides: growing lower bars extend farther below zero.
+// Equal magnitudes are green, exactly as in the terminal.
+// A first finite bar after warm-up is red because its previous value is na.
+// The bar_index == 0 case also preserves terminal behavior when length is 1.
+// Pine rounds comparison operands to 9 decimals; compare signs, not raw tiny spreads.
+float upperChange = upper - (bar_index == 0 ? upper : upper[1])
+float lowerMagnitudeChange = -lower - (bar_index == 0 ? -lower : -lower[1])
+bool upperGreen = not na(upperChange) and math.sign(upperChange) >= 0
+bool lowerGreen = not na(lowerMagnitudeChange) and math.sign(lowerMagnitudeChange) >= 0
+
+hline(0, "Zero", color=color.new(color.gray, 50))
+plot(upper, "Upper |Jaw - Teeth|", color=upperGreen ? growingColor : shrinkingColor, style=plot.style_columns, histbase=0)
+plot(lower, "Lower -|Teeth - Lips|", color=lowerGreen ? growingColor : shrinkingColor, style=plot.style_columns, histbase=0)
+
+// Optional alert conditions; nothing sends until you create an alert in TradingView.
+// These are spread-color transitions, NOT bullish/bearish or buy/sell signals.
+bool ready = not na(upper) and not na(lower)
+bool previousReady = not na(upper[1]) and not na(lower[1])
+bool bothGreen = ready and upperGreen and lowerGreen
+bool bothRed = ready and not upperGreen and not lowerGreen
+bool greenTransition = barstate.isconfirmed and previousReady and bothGreen and not bothGreen[1]
+bool redTransition = barstate.isconfirmed and previousReady and bothRed and not bothRed[1]
+alertcondition(greenTransition, "Both Gator bars turned green (bar close)", "BCD Gator: both spread magnitudes are growing or unchanged on {{ticker}} {{interval}}. Not a directional trade signal.")
+alertcondition(redTransition, "Both Gator bars turned red (bar close)", "BCD Gator: both spread magnitudes are shrinking on {{ticker}} {{interval}}. Not a directional trade signal.")
