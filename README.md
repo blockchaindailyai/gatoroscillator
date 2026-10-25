@@ -32,7 +32,7 @@ The optional “both bars turned green/red” alert conditions require a closed 
 
 Numerical port-model checks passed against the terminal TypeScript source: 7 fixtures, 6 length configurations, 25,200 compared bars, and 204,486 assertions, with zero measured absolute error. Coverage included rising, falling, flat, step, oscillating, tiny-price, and missing-value data; warm-up; equal-bar coloring; custom lengths; and prefix invariance.
 
-**TradingView compilation and live-chart execution have not been run.** These checks validate a JavaScript model of the port and static Pine contracts, not execution by the Pine runtime. The validation source snapshots and harness are intentionally not included in this standalone repository.
+**The published Pine script compiled and rendered in TradingView on 25 October 2026 using the default lengths 13 / 8 / 5, with no compile or runtime error observed.** This confirms compilation and chart rendering for that check, not full cross-feed or live-data parity. The numerical checks above validate a JavaScript model of the port and static Pine contracts; they are not exhaustive Pine runtime tests. The validation source snapshots and harness are intentionally not included in this standalone repository.
 
 Different market feeds, available history, missing bars, settings, and floating-point arithmetic can still produce cross-platform differences. Color comparisons use the sign of the change to avoid Pine's nine-decimal comparison rounding treating small shrinking spreads as unchanged.
 
