@@ -1,0 +1,72 @@
+BCD TERMINAL - GATOR OSCILLATOR
+Pine Script v6 | 25 October 2026
+
+INSTALL
+1. Open a TradingView chart and its Pine Editor.
+2. Create a new indicator, replace the entire template with the contents of
+   BCD_Terminal_Gator_Oscillator.pine, then Save and Add to chart.
+3. Keep the default lengths 13 / 8 / 5 to match the terminal's default Gator.
+   Use the same symbol, exchange, timeframe, and regular candle type.
+   Match any custom terminal lengths if you changed them there.
+
+WHAT THIS IS
+The terminal has two separate studies:
+- Williams Alligator: three lines ON the price chart. TradingView also has
+  a built-in indicator under that name.
+- Gator Oscillator: two histogram series in a LOWER pane. This file ports
+  that terminal oscillator, rather than inventing a new normalized version.
+
+FORMULA / APPEARANCE
+Source = (high + low) / 2.
+Jaw / teeth / lips = SMA-seeded SMMA (RMA) with lengths 13 / 8 / 5.
+After the seed: next = (previous * (length - 1) + source) / length.
+Upper = absolute(jaw - teeth).
+Lower = -absolute(teeth - lips).
+
+Each side turns green when its absolute size is greater than OR EQUAL TO
+its previous size; red when smaller. The first valid bar after warm-up is
+red, matching the terminal's comparison with a missing previous value.
+At default lengths, the lower histogram starts on bar 8, upper on bar 13
+(counted from the first available data bar; no missing HL2 values).
+
+Values are raw price differences, not percentages, ATR units, or a bounded
+overbought/oversold scale. Positive and negative here identify the two
+histogram series; they do NOT mean bullish/bearish direction.
+
+IMPORTANT ALIGNMENT DETAIL
+The terminal's Gator uses UNSHIFTED averages. Do not apply the +8 / +5 / +3
+displacements of its separate Alligator overlay to this oscillator.
+Other Gator scripts may use displaced averages or different equal-bar
+coloring, so matching their name alone does not ensure identical results.
+
+LIVE BARS / ALERTS
+No future data, lookahead, higher-timeframe requests, or backward plotting.
+The open candle's values and colors can change as its high/low change.
+Optional "both bars turned green/red" alerts require a closed candle and
+a valid previous comparison; they are not buy/sell recommendations.
+Create these manually in TradingView's alert dialog if wanted, selecting
+this indicator and one of its conditions; use Once Per Bar Close.
+Changing settings later requires recreating existing alerts.
+
+VALIDATION / LIMITS
+Numerical port-model checks were run against the actual terminal TypeScript
+source on deterministic rising, falling, flat, step, oscillating, tiny-price,
+and missing-value fixtures, including warm-up, color equality, custom
+lengths, and prefix-invariance (no dependency on future fixture bars).
+The Pine source was statically reviewed against those equations and current
+Pine v6 documentation. TradingView's compiler and live chart were NOT run.
+The tests validate the translated numerical model, not execution of Pine.
+Color comparisons use the sign of the change to avoid Pine's nine-decimal
+comparison rounding treating small shrinking spreads as unchanged.
+Different feeds, candle history start dates, missing bars, or different
+settings and floating-point arithmetic can still cause cross-platform differences.
+
+SOURCE SNAPSHOT
+blockchaindailyai/BCDTerminal, main checked 25 October 2026:
+75042ebea619f2daee2c640b1e3d12ef09aadad2
+app/components/chart-indicators.ts (rma, alligator, gator)
+app/components/chart-study-config.ts (defaults, colors, displacement)
+https://github.com/blockchaindailyai/BCDTerminal/blob/75042ebea619f2daee2c640b1e3d12ef09aadad2/app/components/chart-indicators.ts#L501-L515
+https://www.tradingview.com/support/solutions/43000592305-williams-alligator/
+https://www.tradingview.com/pine-script-docs/language/user-defined-functions/
+https://www.tradingview.com/pine-script-docs/concepts/alerts/
