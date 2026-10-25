@@ -54,8 +54,11 @@ source on deterministic rising, falling, flat, step, oscillating, tiny-price,
 and missing-value fixtures, including warm-up, color equality, custom
 lengths, and prefix-invariance (no dependency on future fixture bars).
 The Pine source was statically reviewed against those equations and current
-Pine v6 documentation. TradingView's compiler and live chart were NOT run.
-The tests validate the translated numerical model, not execution of Pine.
+Pine v6 documentation. On 25 October 2026, the published Pine script compiled
+and rendered in TradingView with default lengths 13 / 8 / 5 and no compile
+or runtime error observed. This confirms compilation and chart rendering
+for that check, not full cross-feed or live-data parity. The numerical tests
+validate the translated model; they are not exhaustive Pine runtime tests.
 Color comparisons use the sign of the change to avoid Pine's nine-decimal
 comparison rounding treating small shrinking spreads as unchanged.
 Different feeds, candle history start dates, missing bars, or different
